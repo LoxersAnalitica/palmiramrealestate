@@ -29,16 +29,21 @@ export default async function handler(req, res) {
         const data = req.body; // Vercel ya parsea el JSON del body
 
         // --- 1. Preparar Payload para Kommo CRM ---
+        const isDossier = data.name === 'Dossier Request (Atanaus)';
+        const targetStatusId = isDossier ? 103045087 : 103034083; // 103045087 = 'Correo', 103034083 = 'Contacto inicial'
+
         const kommoPayload = [
             {
                 "name": "Lead Off-Market - " + data.name,
+                "pipeline_id": 13358703,
+                "status_id": targetStatusId,
                 "_embedded": {
                     "contacts": [
                         {
                             "name": data.name,
                             "custom_fields_values": [
                                 { "field_code": "EMAIL", "values": [{ "value": data.email }] },
-                                { "field_code": "PHONE", "values": [{ "value": data.phone }] }
+                                { "field_code": "PHONE", "values": [{ "value": data.phone || "Not provided" }] }
                             ]
                         }
                     ]
@@ -49,7 +54,7 @@ export default async function handler(req, res) {
         const kommoPromise = fetch('https://pedropablocastro1995.kommo.com/api/v4/leads/complex', {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImp0aSI6ImIzYTI1ODIyMmY2MGE4MjIzZGEwYWExMTUyY2ExNTNiOTM3ZjA2NDRjMmI0NTVmYzQxMTFlM2Q1OTc2YzQ3Mjg4YjYyMTAxMDE3YmZlY2I1In0.eyJhdWQiOiIyNTM5MDhjZi1mMDEzLTQ4YjktYTM2ZC1lNzljZGE0NTU3ZTciLCJqdGkiOiJiM2EyNTgyMjJmNjBhODIyM2RhMGFhMTE1MmNhMTUzYjkzN2YwNjQ0YzJiNDU1ZmM0MTExZTNkNTk3NmM0NzI4OGI2MjEwMTAxN2JmZWNiNSIsImlhdCI6MTc3MzA2ODc0MiwibmJmIjoxNzczMDY4NzQyLCJleHAiOjE5MTE2ODY0MDAsInN1YiI6IjE0OTE2Mzk1IiwiZ3JhbnRfdHlwZSI6IiIsImFjY291bnRfaWQiOjM2MTczNzExLCJiYXNlX2RvbWFpbiI6ImtvbW1vLmNvbSIsInZlcnNpb24iOjIsInNjb3BlcyI6WyJjcm0iLCJmaWxlcyIsImZpbGVzX2RlbGV0ZSIsIm5vdGlmaWNhdGlvbnMiLCJwdXNoX25vdGlmaWNhdGlvbnMiXSwiaGFzaF91dWlkIjoiZjZlMGNjMWItNDAwMy00MjE0LTg3MjUtZmRlNmY4YzNkZTBiIiwiYXBpX2RvbWFpbiI6ImFwaS1jLmtvbW1vLmNvbSJ9.R7Dyal5d3ouaDu4mjwffZsZbyxgF9-gPA1CRiP8NstueOsSDapvYc0JD-Psdqojq4-qUAY7fC3nReDbIB0JBMdBs0Jk5zOn7JUMfdeKOQyLaSihSMqt8p9lhiiGDP-b8LTxwyc4Mlw-dsBhrJ2StiaE0v0cC3NzMdr3oFB3DUkJ5_o5MCU_QvTuFcdbCLswUehts7nIa7ZRYr9mDqihhJCO31pi_S7GoA1udoXFt3NknaY9SGAbaynoTG8nVIhrcgnTFW5avx7_PU7S7yeZnoOUspdtmQNBwnsmx8JAnxt-T2aygb9sC1WspK9FkdlgHguXv7DhQMdnEkr2_6Feheg`,
+                'Authorization': `Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImp0aSI6ImJhMTc1YjFlY2RjMGRhZGE1OGNjNTNiNTFhMDBlYjIyMzk4YmI0NDA3NjQwM2M4MTEzZDU5OTE3NWE5ZWJjYjZlMzQ3N2ZlMmVlOWJmOTRmIn0.eyJhdWQiOiIzOWU2YmMzMS1mMmJhLTRhMmUtOGRjMC1kZjBjMWUxNTQ0ZTUiLCJqdGkiOiJiYTE3NWIxZWNkYzBkYWRhNThjYzUzYjUxYTAwZWIyMjM5OGJiNDQwNzY0MDNjODExM2Q1OTkxNzVhOWViY2I2ZTM0NzdmZTJlZTliZjk0ZiIsImlhdCI6MTc3Mzc2NDMxMiwibmJmIjoxNzczNzY0MzEyLCJleHAiOjE5MDY0MTYwMDAsInN1YiI6IjE0OTE2Mzk1IiwiZ3JhbnRfdHlwZSI6IiIsImFjY291bnRfaWQiOjM2MTczNzExLCJiYXNlX2RvbWFpbiI6ImtvbW1vLmNvbSIsInZlcnNpb24iOjIsInNjb3BlcyI6WyJwdXNoX25vdGlmaWNhdGlvbnMiLCJmaWxlcyIsImNybSIsImZpbGVzX2RlbGV0ZSIsIm5vdGlmaWNhdGlvbnMiXSwiaGFzaF91dWlkIjoiMzI5ODlhYTAtZWRlNC00ZGY5LThlMDQtNzZiMDQzMzUwYTU4IiwiYXBpX2RvbWFpbiI6ImFwaS1jLmtvbW1vLmNvbSJ9.n-ESKadlEYmJy45zaDyDgTRv3w1FN1zwRihWf_90o6om7d-7Y7YrsyX5X4kkHRNQaoB4fw_XHu4P40S-Ayouxe7zcaqAPklSL8BNMNGB6gxpQ2TGgoJ560Rcdxc0404NEgL2ntITbEYGUHt9jGyf_PByhStZakiYHkcDX1KSrygwQk-X3dk3p7aWoL2nerZIITbHAIGBgHr5n9uCQgJHADczEsuek4_-u8hevgzpDXajGzsXy59KUpzxHgKvj0AyXHS-vku7yWp9v5rmAx-V8fa5I-Frui80Nqwn8mb2I5KZTOuJ67LIzEibTy0izpQNPtK7HQPawPGGCjUUK3IAcw`,
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify(kommoPayload)
@@ -74,10 +79,10 @@ export default async function handler(req, res) {
             ]
         };
 
-        const metaPromise = fetch('https://graph.facebook.com/v19.0/1280982267279054/events', {
+        const metaPromise = fetch('https://graph.facebook.com/v19.0/2042708403250462/events', {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer EAAX9D6aoNUIBQxNPZAlBlxZBc30pfOeLdYp31QT3ZAkZBnmeHZAm1eryK1zQF7Dlg292HMG3h1ppEZC5sQfih6avAqZBS5NiNxtxxiKI6gt7AA0r3vVtlhovO6Fku0eyhYiZAO7W2XNYObKoUqBZApKTroQIJDZBReZBPfZBXZC0NygNp86ExxOh96PNStIzOMlNm3f4uOAZDZD`,
+                'Authorization': `Bearer EAAM87XgzXQsBQypNcFU41kQitsANL80ah1uFZC5EjvgUDgwv3EttVpq9UkUd7eZAiSiRLInrgRJVS3HTPznrlGfKnoZB1ZBTP8FRPL3zt8GakkOsRO2FzCpdptZA9xgnXUn10c8Dk56KdZA6GXvwiFJV54Rr4t7KIshLSr6QqZBencWyjYM2xBw930Ilw4x5dB6xwZDZD`,
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify(metaPayload)
